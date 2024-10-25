@@ -13,5 +13,5 @@
     "**/*.tsx",
     ".expo/types/**/*.ts",
     "expo-env.d.ts"
-  ]
+, "app/(tabs)/_layout.jsx", "app/(tabs)/explore.jsx", "app/(tabs)/Home.jsx", "app/_layout.jsx", "app/+html.jsx", "app/+not-found.jsx", "components/ParallaxScrollView.jsx", "components/ThemedView.jsx", "components/ThemedText.jsx", "components/header.jsx", "components/HelloWave.jsx", "components/ExternalLink.jsx", "components/navigation/TabBarIcon.jsx", "components/Collapsible.jsx"  ]
 }
