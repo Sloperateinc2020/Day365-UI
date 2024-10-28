@@ -70,11 +70,13 @@
 // });
 
 import { ScrollView, View, StyleSheet } from 'react-native';
-import React from 'react';
+import React, { useState } from 'react';
 import Header from '../../components/header';
 import Box from '../../components/box';
 
 export default function Index() {
+  const [selectedMenu, setSelectedMenu] = useState('Home'); // Track selected menu
+
   return (
     <ScrollView 
       style={styles.scrollContainer}
@@ -82,8 +84,12 @@ export default function Index() {
       showsVerticalScrollIndicator={true} // Show scrollbar when content exceeds screen height
     >
       <View style={styles.innerContainer}>
-        <Header />
-        <Box />
+        {/* Pass selectedMenu and setSelectedMenu to Header */}
+        <Header selectedMenu={selectedMenu} setSelectedMenu={setSelectedMenu} />
+        
+        {/* Conditionally render Box when "Home" is selected */}
+        {selectedMenu === 'Home' && <Box />}
+        
         {/* Add more components or data below */}
       </View>
     </ScrollView>

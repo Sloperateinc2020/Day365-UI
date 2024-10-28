@@ -1,88 +1,144 @@
-import { ScrollView, View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, Image } from 'react-native';
+import { ScrollView, View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, Image, FlatList } from 'react-native';
 import React, { useState, useEffect } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import config from './config';
 import DropDownPicker from 'react-native-dropdown-picker';
 
 export default function Box() {
-  const [services, setServices] = useState([]);
+  const [allServices, setAllServices] = useState([]);
   const [displayedServices, setDisplayedServices] = useState([]);
   const [stateOpen, setStateOpen] = useState(false);
-  const [cityOpen, setCityOpen] = useState(false);
   const [stateValue, setStateValue] = useState(null);
-  const [cityValue, setCityValue] = useState(null);
+  const [cityValue, setCityValue] = useState('');
+  const [pincodeValue, setPincodeValue] = useState('');
+  const [pincodeSuggestions, setPincodeSuggestions] = useState([]);
   const [stateItems, setStateItems] = useState([]);
-  const [cityItems, setCityItems] = useState([]);
+  const [citySuggestions, setCitySuggestions] = useState([]);
+  const [showCitySuggestions, setShowCitySuggestions] = useState(false);
+  const [showPincodeSuggestions, setShowPincodeSuggestions] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [isSearchActive, setIsSearchActive] = useState(false);
 
   const fetchServices = async () => {
     try {
       const response = await fetch(config.SERVICE_API_URL);
       const data = await response.json();
-      setServices(data.services);
-
-      // Set initial displayed services
-      setDisplayedServices(data.services.slice(0, 4)); // Show only the first 4 services
+      setAllServices(data.services);
+      setDisplayedServices(data.services.slice(0, 4));
+      setIsSearchActive(false);
     } catch (error) {
       Alert.alert('Error', 'Failed to fetch services');
       console.error('Error fetching services:', error);
     }
   };
 
-  // Fetch services on component mount
   useEffect(() => {
     fetchServices();
   }, []);
 
   const handleStateOpen = () => {
-    // Fetch unique states when the dropdown opens
-    if (!stateItems.length) { // Only fetch if state items are not already loaded
-      const statesSet = new Set(services.map(service => service.state));
+    if (!stateItems.length) {
+      const statesSet = new Set(allServices.map(service => service.state));
       const statesArray = Array.from(statesSet).map(state => ({ label: state, value: state }));
       setStateItems(statesArray);
     }
     setStateOpen(true);
   };
 
-  const handleCityOpen = () => {
-    // Fetch cities based on selected state when city dropdown opens
-    if (stateValue) {
-      const filteredCities = services
-        .filter(service => service.state === stateValue)
-        .map(service => ({ label: service.city, value: service.city }));
-
-      // Ensure unique cities
-      const uniqueCities = Array.from(new Set(filteredCities.map(city => city.label)))
-        .map(city => ({ label: city, value: city }));
-
-      setCityItems(uniqueCities);
-    }
-    setCityOpen(true);
+  const handleStateSelect = (state) => {
+    setStateValue(state);
+    setPincodeValue(''); // Clear pincode when state is selected
+    setCityValue(''); // Clear city value when state is selected
+    setStateOpen(false); // Close the dropdown when a state is selected
   };
 
-  // Update cities based on selected state
-  useEffect(() => {
-    if (stateValue) {
-      handleCityOpen(); // Automatically open city dropdown when state changes
+  const filterCities = (input) => {
+    setCityValue(input);
+    if (input && stateValue) {
+      const filteredCities = allServices
+        .filter(
+          service =>
+            service.state === stateValue &&
+            service.city.toLowerCase().includes(input.toLowerCase())
+        )
+        .map(service => service.city);
+      const uniqueCities = Array.from(new Set(filteredCities));
+      setCitySuggestions(uniqueCities);
+      setShowCitySuggestions(true);
     } else {
-      setCityItems([]); // Clear cities if no state is selected
+      setShowCitySuggestions(false);
     }
-    setCityValue(null); // Reset city selection when state changes
-  }, [stateValue]);
+  };
+
+  const handleCitySelect = (city) => {
+    setCityValue(city);
+    setShowCitySuggestions(false);
+    setPincodeValue(''); // Clear pincode when city is selected
+  };
+
+  const filterPincodes = (input) => {
+    setPincodeValue(input);
+    if (input) {
+      const filteredPincodes = allServices
+        .filter(service => service.pincode.toString().includes(input))
+        .map(service => service.pincode);
+      const uniquePincodes = Array.from(new Set(filteredPincodes));
+      setPincodeSuggestions(uniquePincodes);
+      setShowPincodeSuggestions(true);
+    } else {
+      setShowPincodeSuggestions(false);
+    }
+  };
+
+  const handlePincodeSelect = (pincode) => {
+    setPincodeValue(pincode);
+    setShowPincodeSuggestions(false);
+    setStateValue(null);
+    setCityValue('');
+  };
+
+  const handleSearch = () => {
+    let filteredServices;
+
+    if (pincodeValue) {
+      filteredServices = allServices.filter(service => service.pincode.toString() === pincodeValue.toString());
+    } else {
+      const validCityInState = allServices.some(
+        service => service.state === stateValue && service.city.toLowerCase() === cityValue.toLowerCase()
+      );
+
+      if (!validCityInState) {
+        Alert.alert('Error', 'The selected city does not belong to the selected state.');
+        return;
+      }
+
+      filteredServices = allServices.filter(service => {
+        const matchesState = stateValue ? service.state === stateValue : true;
+        const matchesCity = cityValue ? service.city.toLowerCase() === cityValue.toLowerCase() : true;
+        return matchesState && matchesCity;
+      });
+    }
+
+    setDisplayedServices(filteredServices.slice(0, 4));
+    setCurrentIndex(0);
+    setIsSearchActive(true);
+  };
 
   const handleNextService = () => {
-    if (currentIndex < services.length - 5) {
-      setCurrentIndex(currentIndex + 1);
-      setDisplayedServices(services.slice(currentIndex + 1, currentIndex + 5));
+    if (!isSearchActive && currentIndex < allServices.length - 4) {
+      setCurrentIndex(currentIndex + 4);
+      setDisplayedServices(allServices.slice(currentIndex + 4, currentIndex + 8));
     }
   };
 
   const handlePrevService = () => {
-    if (currentIndex > 0) {
-      setCurrentIndex(currentIndex - 1);
-      setDisplayedServices(services.slice(currentIndex - 1, currentIndex + 3));
+    if (!isSearchActive && currentIndex > 0) {
+      setCurrentIndex(currentIndex - 4);
+      setDisplayedServices(allServices.slice(currentIndex - 4, currentIndex));
     }
   };
+
+  const isPincodeDisabled = Boolean(stateValue || cityValue); // Disable pincode based on state or city selection
 
   return (
     <ScrollView contentContainerStyle={styles.scrollContent}>
@@ -118,52 +174,81 @@ export default function Box() {
 
         <View style={styles.searchBar}>
           <Ionicons name="search" size={20} color="#000" style={styles.searchIcon} />
-          <TextInput style={styles.searchInput} placeholder="Search for Services" />
+          <TextInput style={[styles.searchInput, styles.noBorder]} placeholder="Search for Services" />
 
-          {/* State Dropdown */}
           <View style={styles.dropdownWrapper}>
             <DropDownPicker
               open={stateOpen}
               value={stateValue}
               items={stateItems}
               setOpen={setStateOpen}
-              setValue={setStateValue}
+              setValue={handleStateSelect}
               placeholder="Select State"
-              onOpen={handleStateOpen} // Trigger fetch when opening
-              style={styles.stateInput}
+              onOpen={handleStateOpen}
+              style={[styles.stateInput, styles.noBorder, pincodeValue && styles.disabledField]}
               dropDownContainerStyle={styles.dropdownContainer}
+              disabled={!!pincodeValue}
+              dropDownDirection="TOP"
             />
           </View>
 
-          {/* City Dropdown */}
-          <View style={styles.dropdownWrapper}>
-            <DropDownPicker
-              open={cityOpen}
+          <View style={styles.cityInputContainer}>
+            <TextInput
+              style={[styles.cityInput, styles.noBorder, pincodeValue && styles.disabledField]}
+              placeholder="Enter City"
               value={cityValue}
-              items={cityItems}
-              setOpen={setCityOpen}
-              setValue={setCityValue}
-              placeholder="Select City"
-              onOpen={handleCityOpen} // Trigger fetch when opening
-              style={styles.cityInput}
-              dropDownContainerStyle={styles.dropdownContainer}
+              onChangeText={filterCities}
+              editable={!pincodeValue}
             />
+            {showCitySuggestions && (
+              <FlatList
+                data={citySuggestions}
+                renderItem={({ item }) => (
+                  <TouchableOpacity onPress={() => handleCitySelect(item)}>
+                    <Text style={styles.citySuggestionItem}>{item}</Text>
+                  </TouchableOpacity>
+                )}
+                keyExtractor={(item, index) => index.toString()}
+                style={styles.citySuggestionsContainer}
+              />
+            )}
           </View>
 
-          <TextInput style={styles.pincodeInput} placeholder="Pincode" />
-          <TouchableOpacity style={styles.searchButton} onPress={fetchServices}>
+          <View style={styles.pincodeInputContainer}>
+            <TextInput
+              style={[styles.pincodeInput, isPincodeDisabled && styles.disabledField]}
+              placeholder="Pincode"
+              value={pincodeValue}
+              onChangeText={filterPincodes}
+              editable={!isPincodeDisabled}
+            />
+            {showPincodeSuggestions && (
+              <FlatList
+                data={pincodeSuggestions}
+                renderItem={({ item }) => (
+                  <TouchableOpacity onPress={() => handlePincodeSelect(item)}>
+                    <Text style={styles.pincodeSuggestionItem}>{item}</Text>
+                  </TouchableOpacity>
+                )}
+                keyExtractor={(item, index) => index.toString()}
+                style={styles.pincodeSuggestionsContainer}
+              />
+            )}
+          </View>
+
+          <TouchableOpacity style={styles.searchButton} onPress={handleSearch}>
             <Ionicons name="search" size={20} color="#FFF" />
             <Text style={styles.searchButtonText}>Search</Text>
           </TouchableOpacity>
         </View>
 
         <View style={styles.serviceCategories}>
-          <TouchableOpacity onPress={handlePrevService} style={styles.arrowIcon}>
-            <Ionicons name="chevron-back" size={24} color="#4A90E2" />
+          <TouchableOpacity onPress={handlePrevService} style={[styles.arrowIcon, isSearchActive && styles.disabledArrow]}>
+            <Ionicons name="chevron-back" size={24} color={isSearchActive ? "#cccccc" : "#4A90E2"} />
           </TouchableOpacity>
 
           {displayedServices.map((service, index) => (
-            <View key={index} style={[styles.categoryCard, { backgroundColor: '#F0F0F0' }]}>
+            <View key={index} style={[styles.categoryCard, { backgroundColor: service.color }]}>
               <Image
                 source={{ uri: service.imageUrl }}
                 style={styles.serviceImage}
@@ -173,8 +258,8 @@ export default function Box() {
             </View>
           ))}
 
-          <TouchableOpacity onPress={handleNextService} style={styles.arrowIcon}>
-            <Ionicons name="chevron-forward" size={24} color="#4A90E2" />
+          <TouchableOpacity onPress={handleNextService} style={[styles.arrowIcon, isSearchActive && styles.disabledArrow]}>
+            <Ionicons name="chevron-forward" size={24} color={isSearchActive ? "#cccccc" : "#4A90E2"} />
           </TouchableOpacity>
         </View>
       </View>
@@ -294,6 +379,7 @@ const styles = StyleSheet.create({
     width: 800,
     marginLeft: 'auto',
     marginRight: 'auto',
+    height: "50px"
   },
   searchIcon: {
     paddingHorizontal: 10,
@@ -311,32 +397,65 @@ const styles = StyleSheet.create({
     borderColor: '#ccc',
     padding: 10,
     borderRadius: 5,
-    width: 100,
+    width: 150,
     marginRight: 10,
+  },
+  disabledField: {
+    backgroundColor: '#f0f0f0',
+    color: '#888',
+  },
+  cityInputContainer: {
+    width: 150,
+    position: 'relative',
   },
   cityInput: {
     borderWidth: 1,
     borderColor: '#ccc',
     padding: 10,
     borderRadius: 5,
-    width: 100,
-    marginRight: 10,
+    width: '100%',
   },
-  dropdownContainer: {
+  citySuggestionsContainer: {
+    position: 'absolute',
+    top: 45,
+    width: '100%',
+    backgroundColor: '#FFF',
+    borderRadius: 5,
+    borderWidth: 1,
     borderColor: '#ccc',
-    width: 100,
+    maxHeight: 150,
   },
-  dropdownWrapper: {
+  citySuggestionItem: {
+    padding: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#ddd',
+  },
+  pincodeInputContainer: {
     width: 100,
-    marginLeft: 10,
+    position: 'relative',
   },
   pincodeInput: {
     borderWidth: 1,
     borderColor: '#ccc',
     padding: 10,
     borderRadius: 5,
-    width: 100,
+    width: '100%',
     marginRight: 10,
+  },
+  pincodeSuggestionsContainer: {
+    position: 'absolute',
+    top: 45,
+    width: '100%',
+    backgroundColor: '#FFF',
+    borderRadius: 5,
+    borderWidth: 1,
+    borderColor: '#ccc',
+    maxHeight: 150,
+  },
+  pincodeSuggestionItem: {
+    padding: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#ddd',
   },
   searchButton: {
     flexDirection: 'row',
@@ -353,16 +472,19 @@ const styles = StyleSheet.create({
   },
   serviceCategories: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 20,
-    width: '100%', // Ensure it takes full width
+    flexWrap: 'wrap',
+    justifyContent: 'flex-start',
+    marginTop: 40,
+    width: '150%',
+    marginLeft: "230px",
   },
   categoryCard: {
     padding: 15,
     borderRadius: 10,
     alignItems: 'center',
-    width: 150,
-    margin: 3,
+    width: 160,
+    marginHorizontal: 8,
+    marginBottom: 16,
   },
   serviceImage: {
     width: 60,
@@ -383,18 +505,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginRight: 10,
   },
-  dropdownToggle: {
-    backgroundColor: '#D6E4FF',
-    padding: 10,
-    borderRadius: 5,
-    marginTop: 10,
-    alignItems: 'center',
+  disabledArrow: {
+    opacity: 0.5,
   },
-  dropdownToggleText: {
-    color: '#4A90E2',
-    fontWeight: 'bold',
-  },
-  additionalServices: {
-    marginTop: 10,
+  noBorder: {
+    borderWidth: 0,
   },
 });

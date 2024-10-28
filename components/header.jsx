@@ -1,65 +1,85 @@
-import { View, Text, StyleSheet, TouchableOpacity  } from 'react-native'
-import React from 'react'
+// Header.js
+import React from 'react';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 
-export default function Header() {
+export default function Header({ selectedMenu, setSelectedMenu }) {
+  const handleMenuClick = (menu) => {
+    setSelectedMenu(menu);
+  };
+
   return (
     <View style={styles.outerContainer}>
       <View style={styles.container}>
         <Text style={styles.logoText}>LOGO</Text>
         
-        {/* Wrap the five items in another View to apply right-side spacing */}
+        {/* Menu Items */}
         <View style={styles.menuContainer}>
-          <Text style={styles.textWithGap}>Home</Text>
-          <Text style={styles.textWithGap}>All services</Text>
-          <Text style={styles.textWithGap}>About</Text>
-          <Text style={styles.textWithGap}>Contact</Text>
-          <Text style={styles.textWithGap}>Login/Register</Text>
+          <TouchableOpacity onPress={() => handleMenuClick('Home')}>
+            <Text style={[styles.textWithGap, selectedMenu === 'Home' && styles.selectedText]}>
+              Home
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => handleMenuClick('All Services')}>
+            <Text style={[styles.textWithGap, selectedMenu === 'All Services' && styles.selectedText]}>
+              All services
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => handleMenuClick('About')}>
+            <Text style={styles.textWithGap}>About</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => handleMenuClick('Contact')}>
+            <Text style={styles.textWithGap}>Contact</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => handleMenuClick('Login/Register')}>
+            <Text style={styles.textWithGap}>Login/Register</Text>
+          </TouchableOpacity>
           <TouchableOpacity style={styles.vendorButton}>
             <Text style={styles.vendorButtonText}>Join As Vendor</Text>
           </TouchableOpacity>
         </View>
       </View>
     </View>
-  )
+  );
 }
 
 const styles = StyleSheet.create({
   outerContainer: {
-    flex: 1,  
-    justifyContent: 'center',  
-    alignItems: 'center',  
-    backgroundColor: '#f5f5f5',  
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#f5f5f5',
   },
   container: {
-    flexDirection: 'row',  
-    alignItems: 'center',  
-    backgroundColor: 'white',  
-    padding: 10,  
-    width: '100%',  
-    height: 100,  
-    borderRadius: 8,  
-    shadowColor: '#000',  
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'white',
+    padding: 10,
+    width: '100%',
+    height: 100,
+    borderRadius: 8,
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
     shadowRadius: 4,
-    elevation: 3,  
+    elevation: 3,
   },
   logoText: {
-    fontWeight: 'bold',  
-    fontSize: 18, 
-    marginRight: 10,  
-    marginLeft: 20,  
-
+    fontWeight: 'bold',
+    fontSize: 18,
+    marginRight: 10,
+    marginLeft: 20,
   },
   menuContainer: {
-    flexDirection: 'row',  
-    marginLeft: 65,  
-    
+    flexDirection: 'row',
+    marginLeft: 65,
   },
   textWithGap: {
-    marginRight: 20,  
+    marginRight: 20,
     fontSize: 16,
-    marginTop:"8px"  
+    marginTop:"10px"
+  },
+  selectedText: {
+    color: 'blue', // Highlight selected text in blue
   },
   vendorButton: {
     backgroundColor: '#8a6ded',
@@ -71,7 +91,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 3.84,
     elevation: 5,
-    marginLeft:'530px'
+    marginLeft: '500px',
   },
   vendorButtonText: {
     color: '#fff',
