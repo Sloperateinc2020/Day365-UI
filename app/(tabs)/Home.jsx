@@ -107,5 +107,3 @@ const styles = StyleSheet.create({
     flex: 1, // Ensures the View takes up the available space
   },
 });
-
-

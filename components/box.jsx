@@ -3,6 +3,8 @@ import React, { useState, useEffect } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import config from './config';
 import DropDownPicker from 'react-native-dropdown-picker';
+import Footer from './Footer'; 
+
 
 export default function Box() {
   const [allServices, setAllServices] = useState([]);
@@ -450,12 +452,12 @@ export default function Box() {
 </View>
 
 
-      {/* See More Button */}
       <TouchableOpacity style={styles.seeMorearticlesButton}>
         <Text style={styles.seeMorearticlesButtonText}>See more articles</Text>
       </TouchableOpacity>
     </View>
       </View>
+      <Footer />
     </ScrollView>
   );
 }
@@ -979,12 +981,12 @@ const styles = StyleSheet.create({
 
   },
   card: {
-    width: '24%', 
+    width: '28%', 
     backgroundColor: '#f5f5f5',
     borderRadius: 10,
     padding: 1,
     alignItems: 'flex-start',
-    marginRight: 20, 
+    marginRight: 18, 
   },
   cardImage: {
     width: '90%', 
@@ -1017,12 +1019,12 @@ const styles = StyleSheet.create({
   cardReadTime: {
     fontSize: 12,
     color: '#999',
-    backgroundColor: '#f0f0f0',  // Light background color for the read time
+    backgroundColor: '#f0f0f0',  
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 5,
-    marginLeft: 60, // Space between date and read time
-    color: '#333', // Dark text color for contrast
+    marginLeft: 60, 
+    color: '#333', 
  
   },
   seeMorearticlesButton: {
